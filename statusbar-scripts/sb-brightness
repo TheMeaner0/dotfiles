@@ -1,0 +1,30 @@
+#!/bin/bash
+
+brightness_type="xrandr"
+screen_output=$(xrandr | grep " connected" | cut -d' ' -f1 | head -n1)
+current_brightness=$(xrandr --verbose | grep -A 10 "^$screen_output" | grep -i "Brightness" | awk '{print $2}' | head -n1)
+# xrandr brightness is float between 0 and 1
+brightness_per=$(printf "%.0f" "$(echo "$current_brightness * 100" | bc -l)")
+
+# Handle click events (for status bar integration)
+case $BLOCK_BUTTON in
+    1) # Left click: increase brightness
+        if [ "$brightness_type" = "sys" ]; then
+            new_brightness=$((curr_brightness + max_brightness / 20)) # +5%
+            [ "$new_brightness" -gt "$max_brightness" ] && new_brightness=$max_brightness
+            echo "$new_brightness" | sudo tee "$brightness_file/brightness" >/dev/null
+        else
+            new_brightness=$(echo "$current_brightness + 0.05" | bc)
+            (( $(echo "$new_brightness > 1.0" | bc -l) )) && new_brightness=1.0
+            xrandr --output "$screen_output" --brightness "$new_brightness"
+        fi
+        ;;
+    3) # Right click: show notification
+        notify-send "💡 Brightness module" "Shows current brightness level: ${brightness_per}% ☀️."
+        ;;
+    6) # Hold: edit script
+        setsid -f "${TERMINAL:-xterm}" -e "${EDITOR:-nano}" "$0"
+        ;;
+esac
+
+echo "| 󰌵 ${brightness_per}% | "

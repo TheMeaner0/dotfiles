@@ -1,0 +1,21 @@
+#!/bin/bash
+
+status=$(nmcli radio wifi)
+
+
+
+case $BLOCK_BUTTON in
+    1) # Left click: increase brightness
+      wifi-switch
+esac
+
+
+
+if [ "$status" = "enabled" ]; then
+    echo "󰤨   | "
+else
+    echo "󰤭   | "
+fi
+
+
+
